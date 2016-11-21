@@ -12,7 +12,7 @@ import lxml.etree
 
 
 def add_members(members, p, xmltree):
-    members += [m.findtext('email').split('@')[0].lower() for m in p.findall('member')]
+    members += [m.findtext('email') for m in p.findall('member')]
 
     for subp in p.findall('subproject'):
         if subp.get('inherit-members') == '1':

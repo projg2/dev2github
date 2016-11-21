@@ -23,7 +23,8 @@ def main(list_f='devs.ldif', devs_json='devs.json'):
                 uid = v
             elif k == 'gentooGitHubUser':
                 ghuser = v
-        devs[uid] = ghuser
+        assert uid is not None
+        devs[uid + '@gentoo.org'] = ghuser
 
     with open(devs_json, 'w') as devs_f:
         json.dump(devs, devs_f, indent=0, sort_keys=True)
