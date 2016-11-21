@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Verify GitHub usernames in devs.json
+# Sync developers team on GitHub (invite or remove)
 # (c) 2016 Michał Górny, 2-clause BSD licensed
 
 import json
@@ -23,13 +23,20 @@ def main(devs_json='devs.json'):
     else:
         raise RuntimeError('Unable to find developers team')
 
-    members = frozenset(m.login for m in t.get_members())
+    members = set(m.login for m in t.get_members())
 
     for dev, ghdev in devs.items():
         if not ghdev:
             continue
         if ghdev not in members:
-            print('Dev not found in developers team: %s (%s)' % (ghdev, dev))
+            print('INVITE %s (%s)' % (ghdev, dev))
+            t.add_membership(gh.get_user(ghdev))
+        else:
+            members.remove(ghdev)
+
+    for m in members:
+        print('REMOVE %s' % m)
+        t.remove_from_members(gh.get_user(m))
 
     return 0
 
