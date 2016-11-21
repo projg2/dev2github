@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Update devs.json using plain text list (i.e. add new devs)
+# Verify GitHub usernames in devs.json
 # (c) 2016 Michał Górny, 2-clause BSD licensed
 
 import json
