@@ -16,14 +16,20 @@ def main(devs_json='devs.json'):
 
     with open(os.path.expanduser('~/.github-token')) as f:
         gh = github.Github(f.read().strip())
+    
+    for t in gh.get_organization('gentoo').get_teams():
+        if t.name == 'developers':
+            break
+    else:
+        raise RuntimeError('Unable to find developers team')
+
+    members = frozenset(m.login for m in t.get_members())
 
     for dev, ghdev in devs.items():
         if not ghdev:
             continue
-        try:
-            gh.get_user(ghdev)
-        except github.UnknownObjectException:
-            print('Dev not found: %s (%s)' % (ghdev, dev))
+        if ghdev not in members:
+            print('Dev not found in developers team: %s (%s)' % (ghdev, dev))
 
     return 0
 
