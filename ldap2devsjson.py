@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Create devs.json from 'perl_ldap -S gentooGitHubUser' output
+# Create devs.json from LDIF
 # (c) 2016 Michał Górny, 2-clause BSD licensed
 
 import json
@@ -7,19 +7,23 @@ import os
 import sys
 
 
-def main(list_f='devs.txt', devs_json='devs.json'):
+def main(list_f='devs.ldif', devs_json='devs.json'):
     devs = {}
     with open(list_f) as f:
-        for l in f:
-            if l.startswith('Searching'):
-                continue
-            elif not l.strip():
-                continue
-            spl = [x.strip() for x in l.split('->')]
-            assert len(spl) == 2
-            if spl[1] == 'undefined':
-                spl[1] = ''
-            devs[spl[0]] = spl[1]
+        ldif_data = f.read()
+
+    for block in ldif_data.split('\n\n'):
+        if not block.strip():
+            continue
+        uid = None
+        ghuser = ''
+        for l in block.splitlines():
+            k, v = l.split(': ')
+            if k == 'uid':
+                uid = v
+            elif k == 'gentooGitHubUser':
+                ghuser = v
+        devs[uid] = ghuser
 
     with open(devs_json, 'w') as devs_f:
         json.dump(devs, devs_f, indent=0, sort_keys=True)

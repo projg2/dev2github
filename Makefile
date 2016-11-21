@@ -1,12 +1,12 @@
 all: devs.json projects.xml
 clean:
-	rm -f devs.txt devs.json projects.xml
+	rm -f devs.ldif devs.json projects.xml
 
-devs.json: devs.txt
+devs.json: devs.ldif
 	./ldap2devsjson.py $< $@
 
-devs.txt:
-	ssh dev.gentoo.org '/usr/local/bin/perl_ldap -S gentooGitHubUser' > $@
+devs.ldif:
+	ssh dev.gentoo.org "ldapsearch '(&(gentooStatus=active)(gentooAccess=git.gentoo.org*))' -Z uid gentooGitHubUser -LLL" > $@
 	
 projects.xml:
 	wget -O $@ https://api.gentoo.org/metastructure/projects.xml
