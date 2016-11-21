@@ -22,7 +22,7 @@ def add_members(members, p, xmltree):
                     add_members(members, op, xmltree)
 
 
-def main(devs_json='devs.json', projects_xml='projects.xml'):
+def main(devs_json='devs.json', projects_xml='projects.xml', proj_map_json='proj-map.json'):
     with open(devs_json) as devs_f:
         devs = json.load(devs_f)
 
@@ -47,10 +47,12 @@ def main(devs_json='devs.json', projects_xml='projects.xml'):
 
     gorg = gh.get_organization('gentoo')
 
+    proj_map = {}
     for t in gorg.get_teams():
         p = projs.get(t.name.lower())
         if p is not None:
             print('%s <-> %s' % (t.name, p))
+            proj_map[p.findtext('email').lower()] = 'gentoo/' + t.name
             rem_projs.remove(p)
             members = []
             add_members(members, p, projs_x.getroot())
@@ -118,11 +120,14 @@ def main(devs_json='devs.json', projects_xml='projects.xml'):
 
         print('CREATE TEAM %s' % name)
         t = gorg.create_team(name, description=desc, privacy='closed')
+        proj_map[p.findtext('email')] = t.name
         for m in gh_members:
             u = gh_get_user(m)
             print('ADD %s' % u)
             t.add_membership(u)
 
+    with open(proj_map_json, 'w') as f:
+        json.dump(proj_map, f, indent=0, sort_keys=True)
     return 0
 
 
