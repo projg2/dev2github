@@ -121,7 +121,7 @@ def main(devs_json='devs.json', projects_xml='projects.xml'):
         for m in gh_members:
             u = gh_get_user(m)
             print('ADD %s' % u)
-            t.add_to_members(u)
+            t.add_membership(u)
 
     return 0
 
