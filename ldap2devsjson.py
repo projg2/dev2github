@@ -15,16 +15,20 @@ def main(list_f='devs.ldif', devs_json='devs.json'):
     for block in ldif_data.split('\n\n'):
         if not block.strip():
             continue
-        uid = None
+        mails = set()
         ghuser = ''
         for l in block.splitlines():
             k, v = l.split(': ')
             if k == 'uid':
-                uid = v
+                mails.add(v + '@gentoo.org')
+            elif k == 'mail':
+                assert '@' in v
+                mails.add(v)
             elif k == 'gentooGitHubUser':
                 ghuser = v
-        assert uid is not None
-        devs[uid + '@gentoo.org'] = ghuser
+        assert mails
+        for m in mails:
+           devs[m] = ghuser
 
     with open(devs_json, 'w') as devs_f:
         json.dump(devs, devs_f, indent=0, sort_keys=True)
