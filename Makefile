@@ -6,7 +6,7 @@ devs.json: devs.ldif
 	./ldap2devsjson.py $< $@
 
 devs.ldif:
-	ssh dev.gentoo.org "ldapsearch '(&(gentooStatus=active)(gentooAccess=git.gentoo.org*))' -Z uid gentooGitHubUser -LLL" > $@
+	ssh dev.gentoo.org "ldapsearch '(gentooStatus=active)' -Z uid gentooGitHubUser -LLL" > $@
 	
 projects.xml:
 	wget -O $@ https://api.gentoo.org/metastructure/projects.xml
