@@ -2,6 +2,7 @@
 # Sync projects to GitHub
 # (c) 2016 Michał Górny, 2-clause BSD licensed
 
+import collections
 import json
 import os
 import os.path
@@ -36,7 +37,9 @@ def main(devs_json='devs.json', projects_xml='projects.xml', proj_map_json='proj
         projs[p.findtext('name').split('@')[0].lower()] = p
         projs[p.findtext('url').split(':')[2].lower()] = p
 
-    rev_devs = {v: k.lower() for k, v in devs.items()}
+    rev_devs = collections.defaultdict(list)
+    for k, v in devs.items():
+        rev_devs[v].append(k.lower())
     rem_projs = set(p for p in projs_x.getroot())
 
     gh_users_cache = {}
@@ -59,8 +62,8 @@ def main(devs_json='devs.json', projects_xml='projects.xml', proj_map_json='proj
             gh_members = []
             for m in t.get_members():
                 if m.login in rev_devs:
-                    gh_members.append(rev_devs[m.login])
-                    if rev_devs[m.login] not in members:
+                    gh_members.extend(rev_devs[m.login])
+                    if all(x not in members for x in rev_devs[m.login]):
                         print('REMOVE %s' % m)
                         t.remove_from_members(m)
             for m in members:
