@@ -70,7 +70,7 @@ def main(devs_json='devs.json', projects_xml='projects.xml', proj_map_json='proj
                 if devs.get(m) and m not in gh_members:
                     u = gh_get_user(devs[m])
                     print('ADD %s' % u)
-                    t.add_to_members(u)
+                    t.add_membership(u)
 
             # empty now? remove it
             if not list(t.get_members()):
