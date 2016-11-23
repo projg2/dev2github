@@ -23,7 +23,8 @@ def main(devs_json='devs.json'):
     else:
         raise RuntimeError('Unable to find developers team')
 
-    members = set(m.login for m in t.get_members())
+    members = frozenset(m.login for m in t.get_members())
+    remaining = set(members)
 
     for dev, ghdev in devs.items():
         if not ghdev:
@@ -32,9 +33,9 @@ def main(devs_json='devs.json'):
             print('INVITE %s (%s)' % (ghdev, dev))
             t.add_membership(gh.get_user(ghdev))
         else:
-            members.remove(ghdev)
+            remaining.discard(ghdev)
 
-    for m in members:
+    for m in remaining:
         print('REMOVE %s' % m)
         t.remove_from_members(gh.get_user(m))
 
