@@ -37,18 +37,21 @@ def main(devs_json='devs.json', projects_xml='projects.xml', proj_map_json='proj
         projs[p.findtext('name').split('@')[0].lower()] = p
         projs[p.findtext('url').split(':')[2].lower()] = p
 
-    rev_devs = collections.defaultdict(list)
-    for k, v in devs.items():
-        rev_devs[v].append(k.lower())
+    gh_devs = set(devs.values())
     rem_projs = set(p for p in projs_x.getroot())
 
     gh_users_cache = {}
+    def gh_users_to_login(it):
+        for u in it:
+            gh_users_cache.setdefault(u.login, u)
+            yield u.login
     def gh_get_user(x):
         if not x in gh_users_cache:
             gh_users_cache[x] = gh.get_user(x)
         return gh_users_cache[x]
 
     gorg = gh.get_organization('gentoo')
+    owners = set(gh_users_to_login(gorg.get_members(role='admin')))
 
     proj_map = {}
     for t in gorg.get_teams():
@@ -57,23 +60,49 @@ def main(devs_json='devs.json', projects_xml='projects.xml', proj_map_json='proj
             print('%s <-> %s' % (t.name, p))
             proj_map[p.findtext('email').lower()] = 'gentoo/' + t.name
             rem_projs.remove(p)
+            # members = all project members by e-mail
             members = []
             add_members(members, p, projs_x.getroot())
-            gh_members = []
-            for m in t.get_members():
-                if m.login in rev_devs:
-                    gh_members.extend(rev_devs[m.login])
-                    if all(x not in members for x in rev_devs[m.login]):
-                        print('REMOVE %s' % m)
-                        t.remove_from_members(m)
-            for m in members:
-                if devs.get(m) and m not in gh_members:
-                    u = gh_get_user(devs[m])
-                    print('ADD %s' % u)
-                    t.add_membership(u)
+            # gh_members = all project members mapped to github logins
+            gh_members = set(devs[x] for x in members if devs[x])
+
+            # team_members = all gh team members, as github.User
+            team_members = set(gh_users_to_login(t.get_members()))
+            # team_maints = gh team maintainers, as github.User
+            team_maints = set(gh_users_to_login(t.get_members(role='maintainer')))
+
+            # owners can't be maints, so assume they are promoted
+            team_maints |= team_members & owners
+
+            # remove extraneous gh team members that do have dev acct
+            # (i.e. most likely left the team)
+            extra_gh_members = team_members - gh_members
+            for m in extra_gh_members:
+                if m in gh_devs:
+                    print('REMOVE %s' % m)
+                    t.remove_from_members(gh_get_user(m))
+                    team_members.discard(m)
+
+            # promote devs on the team to maintainers
+            non_promoted_members = team_members - team_maints
+            for m in non_promoted_members:
+                if m in gh_devs:
+                    print('PROMOTE %s' % m)
+                    t.add_membership(gh_get_user(m), role='maintainer')
+
+            # add new devs to the team
+            extra_devs = gh_members - team_members
+            for m in extra_devs:
+                print('ADD %s' % m)
+                if m in owners:
+                    # owner can't be maintainer
+                    t.add_membership(gh_get_user(m))
+                else:
+                    t.add_membership(gh_get_user(m), role='maintainer')
+                team_members.add(m)
 
             # empty now? remove it
-            if not list(t.get_members()):
+            if not team_members:
                 if not list(t.get_repos()):
                     print('DELETE TEAM')
                     t.delete()
@@ -125,9 +154,12 @@ def main(devs_json='devs.json', projects_xml='projects.xml', proj_map_json='proj
         t = gorg.create_team(name, description=desc, privacy='closed')
         proj_map[p.findtext('email')] = t.name
         for m in gh_members:
-            u = gh_get_user(m)
-            print('ADD %s' % u)
-            t.add_membership(u)
+            print('ADD %s' % m)
+            if m in owners:
+                # owner can't be maintainer
+                t.add_membership(gh_get_user(m))
+            else:
+                t.add_membership(gh_get_user(m), role='maintainer')
 
     with open(proj_map_json, 'w') as f:
         json.dump(proj_map, f, indent=0, sort_keys=True)
