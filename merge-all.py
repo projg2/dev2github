@@ -14,9 +14,9 @@ def main(devs_json='devs.json', proxied_maints_json='proxied-maints.json', all_j
     with open(proxied_maints_json) as pm_f:
         maints = json.load(pm_f)
 
-    devs.update(maints)
+    maints.update(devs)
     with open(all_json, 'w') as all_f:
-        json.dump(devs, all_f)
+        json.dump(maints, all_f)
 
     return 0
 
