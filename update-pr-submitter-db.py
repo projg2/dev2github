@@ -22,7 +22,7 @@ def main(proxied_maints_json='proxied-maints.json'):
         gh = github.Github(f.read().strip())
 
     r = gh.get_repo('gentoo/gentoo')
-    for pr in r.get_pulls():
+    for pr in r.get_pulls(state='all'):
         print("\rPR #%04d" % pr.number, end='')
         if pr.user.login not in maints.values():
             if pr.commits == 0:
