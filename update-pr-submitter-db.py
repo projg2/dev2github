@@ -28,12 +28,37 @@ def main(proxied_maints_json='proxied-maints.json'):
             if pr.commits == 0:
                 continue
             c1 = pr.get_commits()[0]
-            if c1.committer != pr.user:
-                print("\nPR submitter (%s) != committer (%s)" %
+            attributed = c1.committer
+            attributed_c = c1.commit.committer
+            if attributed != pr.user and c1.author == pr.user:
+                attributed = c1.author
+                attributed_c = c1.commit.author
+            elif attributed != pr.user:
+                print('')
+                print(pr.html_url)
+                print(pr.patch_url)
+                print("PR submitter (%s) != committer (%s)" %
                         (pr.user, c1.committer))
+                if c1.committer is None:
+                    print('%s (%s) -> [PR] %s (%s)' % (c1.commit.committer.email,
+                        c1.commit.committer.name, pr.user.login, pr.user.name))
+                else:
+                    print('%s (%s) -> %s (%s)' % (c1.commit.committer.email,
+                        c1.commit.committer.name, c1.committer.login, c1.committer.name))
+
+                while True:
+                    resp = input('-> Proceed? [Y/n]')
+                    if resp.lower() == 'y' or not resp:
+                        if c1.committer is not None:
+                            maints[c1.commit.committer.email] = c1.committer.login
+                        else:
+                            maints[c1.commit.committer.email] = pr.user.login
+                        break
+                    elif resp.lower() == 'n':
+                        break
                 continue
-            print('\n%s -> %s' % (c1.commit.committer.email, c1.committer.login))
-            maints[c1.commit.committer.email] = c1.committer.login
+            print('\n%s -> %s' % (attributed_c.email, attributed.login))
+            maints[attributed_c.email] = attributed.login
 
             with open(proxied_maints_json, 'w') as pm_f:
                 json.dump(maints, pm_f)
