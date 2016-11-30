@@ -1,3 +1,16 @@
+Dependencies
+============
+
+All scripts were tested with Python 3.5. They should work with 2.7,
+however may require some minor fixes.
+
+Scripts interfacing with GitHub require PyGithub, with the following
+patches applied:
+
+- https://github.com/PyGithub/PyGithub/pull/490
+- https://github.com/PyGithub/PyGithub/pull/491
+
+
 ldap2devsjson
 =============
 
