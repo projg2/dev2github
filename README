@@ -1,0 +1,82 @@
+ldap2devsjson
+=============
+
+Input: devs.ldif
+Output: devs.json
+
+Prerequisites: LDIF dump or SSH access to LDAP-enabled Gentoo host
+
+This script creates a mapping of developer e-mail addresses to GitHub
+usernames (n:1), based on LDIF format dump of LDAP. If you have SSH
+access to dev.gentoo.org, run 'make devs.ldif' to create devs.ldif
+straight from LDAP.
+
+
+update-pr-submitter-db
+======================
+
+Input/output: proxied-maints.json
+
+Prerequisites: GitHub token (stored in ~/.github-token) with read access
+	to public repositories
+
+This script creates or updated a mapping of e-mail addresses
+corresponding to committers or authors of pull request commits to their
+GitHub usernames (n:1). The script is semi-automatic and will request
+confirmation if mapping can not be clearly determined.
+
+
+merge-all
+=========
+
+Input: devs.json, proxied-maints.json
+Output: all.json
+
+This script merges the proxied-maint and developer databases into
+a single mapping of e-mail addresses to GitHub accounts, useful for pull
+request assignment.
+
+
+sync-devs
+=========
+
+Input: devs.json
+
+Prerequisites: GitHub token with 'read:org' and 'write:org' scope
+
+This script updates the members of 'Developers' team to match currently
+active Gentoo developers. Developers that are not on the team are
+invited to join it. Members that are not (or no longer) developers are
+removed from it. Any changes are output verbosely.
+
+
+sync-projects
+=============
+
+Input: devs.json, projects.xml
+Output: proj-map.json
+
+Prerequisites: GitHub token with 'admin:org' scope
+
+This script updates the mapping of Gentoo projects to GitHub teams,
+including creating new teams, updating developer lists and outputting
+the project->team mapping.
+
+As an input, it requires a fresh copy of projects.xml from
+api.gentoo.org. You can use 'make projects.xml' to make it fetch it for
+you.
+
+The script matches GitHub teams by name, comparing it case-insensitively
+to the user part of project's e-mail address, name or wiki page title
+('Project:' stripped). Teams that do not match any Gentoo project are
+listed verbosely as '<team> <-> ?', and ignored.
+
+Gentoo developers are automatically added to and removed from teams
+appropriately, based on membership in projects.xml. All developers are
+given team maintainer privileges. Team members that are not developers
+(i.e. external contributors) are not altered since they can not be
+reliably represented in the Gentoo Wiki).
+
+Empty teams (having no members and no repositories) will be removed
+automatically. For creating new teams, the script will request
+confirmation (and choice of name).
