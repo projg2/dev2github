@@ -121,11 +121,15 @@ def main(devs_json='devs.json', projects_xml='projects.xml'):
         members = []
         add_members(members, p, projs_x.getroot())
 
-        if not members and not p.findall('subproject'):
-            print('WARN: %s project has no developers!' % names[0])
+        if not members:
+            if not p.findall('subproject'):
+                print('WARN: %s project has no developers!' % names[0])
+            else:
+                print('NOTE: %s project purely organizational (no members)' % names[0])
             continue
         gh_members = [devs[m] for m in members if devs.get(m)]
         if not gh_members:
+            print('NOTE: %s project has no GitHub users' % names[0])
             continue
 
         print('== NEW PROJECT ==')
