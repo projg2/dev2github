@@ -50,6 +50,31 @@ a single mapping of e-mail addresses to GitHub accounts, useful for pull
 request assignment.
 
 
+update-proj-mapping
+===================
+
+Input: projects.xml
+
+Output: proj-map.json
+
+Prerequisites: GitHub token with 'read:org' scope
+
+This script creates a mapping of Gentoo project e-mail addresses to
+respective GitHub team names (in org/team form).
+
+As an input, it requires a fresh copy of projects.xml from
+api.gentoo.org. You can use 'make projects.xml' to make it fetch it for
+you.
+
+The script matches GitHub teams by name, comparing it case-insensitively
+to the user part of project's e-mail address, name or wiki page title
+('Project:' stripped). Teams that do not match any Gentoo project are
+listed verbosely as '<team> <-> ?', and ignored.
+
+Gentoo projects that do not have any matching GitHub teams are listed
+verbosely after all GitHub teams are processed.
+
+
 sync-devs
 =========
 
@@ -67,13 +92,11 @@ sync-projects
 =============
 
 Input: devs.json, projects.xml
-Output: proj-map.json
 
 Prerequisites: GitHub token with 'admin:org' scope
 
 This script updates the mapping of Gentoo projects to GitHub teams,
-including creating new teams, updating developer lists and outputting
-the project->team mapping.
+including creating new teams and updating developer lists.
 
 As an input, it requires a fresh copy of projects.xml from
 api.gentoo.org. You can use 'make projects.xml' to make it fetch it for
@@ -91,5 +114,5 @@ given team maintainer privileges. Team members that are not developers
 reliably represented in the Gentoo Wiki).
 
 Empty teams (having no members and no repositories) will be removed
-automatically. For creating new teams, the script will request
-confirmation (and choice of name).
+automatically. When creating new teams, the script will request
+confirmation (and a choice of name).

@@ -2,9 +2,7 @@
 # Sync projects to GitHub
 # (c) 2016 Michał Górny, 2-clause BSD licensed
 
-import collections
 import json
-import os
 import os.path
 import sys
 
@@ -23,7 +21,7 @@ def add_members(members, p, xmltree):
                     add_members(members, op, xmltree)
 
 
-def main(devs_json='devs.json', projects_xml='projects.xml', proj_map_json='proj-map.json'):
+def main(devs_json='devs.json', projects_xml='projects.xml'):
     with open(devs_json) as devs_f:
         devs = json.load(devs_f)
 
@@ -53,12 +51,10 @@ def main(devs_json='devs.json', projects_xml='projects.xml', proj_map_json='proj
     gorg = gh.get_organization('gentoo')
     owners = set(gh_users_to_login(gorg.get_members(role='admin')))
 
-    proj_map = {}
     for t in gorg.get_teams():
         p = projs.get(t.name.lower())
         if p is not None:
             print('%s <-> %s' % (t.name, p))
-            proj_map[p.findtext('email').lower()] = 'gentoo/' + t.name
             rem_projs.remove(p)
             # members = all project members by e-mail
             members = []
@@ -152,7 +148,6 @@ def main(devs_json='devs.json', projects_xml='projects.xml', proj_map_json='proj
 
         print('CREATE TEAM %s' % name)
         t = gorg.create_team(name, description=desc, privacy='closed')
-        proj_map[p.findtext('email')] = t.name
         for m in gh_members:
             print('ADD %s' % m)
             if m in owners:
@@ -161,8 +156,6 @@ def main(devs_json='devs.json', projects_xml='projects.xml', proj_map_json='proj
             else:
                 t.add_membership(gh_get_user(m), role='maintainer')
 
-    with open(proj_map_json, 'w') as f:
-        json.dump(proj_map, f, indent=0, sort_keys=True)
     return 0
 
 
