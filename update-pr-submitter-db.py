@@ -27,37 +27,44 @@ def main(proxied_maints_json='proxied-maints.json'):
         if pr.user.login not in maints.values():
             if pr.commits == 0:
                 continue
+            need_confirm = False
             c1 = pr.get_commits()[0]
             attributed = c1.committer
             attributed_c = c1.commit.committer
             if attributed != pr.user and c1.author == pr.user:
                 attributed = c1.author
                 attributed_c = c1.commit.author
-            elif attributed != pr.user:
+
+            if attributed != pr.user:
                 print('')
                 print(pr.html_url)
                 print(pr.patch_url)
                 print("PR submitter (%s) != committer (%s)" %
                         (pr.user, c1.committer))
                 if c1.committer is None:
-                    print('%s (%s) -> [PR] %s (%s)' % (c1.commit.committer.email,
-                        c1.commit.committer.name, pr.user.login, pr.user.name))
+                    attributed = pr.user
+                    print('%s (%s) -> [PR] %s (%s)' % (attributed_c.email,
+                        c1.commit.committer.name, attributed.login, attributed.name))
                 else:
-                    print('%s (%s) -> %s (%s)' % (c1.commit.committer.email,
-                        c1.commit.committer.name, c1.committer.login, c1.committer.name))
+                    attributed = c1.committer
+                    print('%s (%s) -> %s (%s)' % (attributed_c.email,
+                        c1.commit.committer.name, attributed.login, attributed.name))
+                need_confirm = True
+            else:
+                print('\n%s -> %s' % (attributed_c.email, attributed.login))
 
+            if need_confirm:
+                escape = False
                 while True:
                     resp = input('-> Proceed? [Y/n]')
                     if resp.lower() == 'y' or not resp:
-                        if c1.committer is not None:
-                            maints[c1.commit.committer.email] = c1.committer.login
-                        else:
-                            maints[c1.commit.committer.email] = pr.user.login
                         break
                     elif resp.lower() == 'n':
+                        escape = True
                         break
-                continue
-            print('\n%s -> %s' % (attributed_c.email, attributed.login))
+                if escape:
+                    continue
+
             maints[attributed_c.email] = attributed.login
 
             with open(proxied_maints_json, 'w') as pm_f:
