@@ -32,4 +32,10 @@ sync-devs: devs.json $(TOKEN)
 sync-projects: devs.json projects.xml $(TOKEN)
 	./sync-projects.py devs.json projects.xml
 
+master.aliases:
+	scp dev.gentoo.org:/var/mail/master.aliases .
+
+project-reports: projects.xml proj-map.json devs.json master.aliases
+	./make-project-report.py $^ proj-reports
+
 .PHONY: default all sync clean distclean
