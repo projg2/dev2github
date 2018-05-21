@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # Create devs.json from LDIF
-# (c) 2016 Michał Górny, 2-clause BSD licensed
+# (c) 2016-2018 Michał Górny, 2-clause BSD licensed
 
+import base64
 import json
 import os
 import sys
@@ -18,7 +19,13 @@ def main(list_f='devs.ldif', devs_json='devs.json'):
         mails = set()
         ghuser = ''
         for l in block.splitlines():
-            k, v = l.split(': ')
+            k, v = l.split(':', 1)
+            if v.startswith(':'):
+                # base64
+                v = base64.b64decode(v[1:].strip()).decode()
+            else:
+                v = v.strip()
+
             if k == 'uid':
                 mails.add(v + '@gentoo.org')
             elif k == 'mail':
