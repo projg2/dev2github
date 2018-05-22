@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim:fileencoding=utf-8
 # Create devs.json from LDIF
 # (c) 2016-2018 Michał Górny, 2-clause BSD licensed
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim:fileencoding=utf-8
 # Create or update JSON mapping of email->gh for pull request submitters
 # (c) 2016 Michał Górny, 2-clause BSD licensed
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim:fileencoding=utf-8
 # Make a report of project members & data
 # (c) 2017 Michał Górny, 2-clause BSD licensed
 

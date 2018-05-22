@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim:fileencoding=utf-8
 # Write project mapping from e-mails to GitHub
 # (c) 2016 Michał Górny, 2-clause BSD licensed
 

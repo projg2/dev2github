@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim:fileencoding=utf-8
 # Merge developers & proxied maintainers JSON
 # (c) 2016 Michał Górny, 2-clause BSD licensed
 
