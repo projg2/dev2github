@@ -26,8 +26,9 @@ def main(devs_json='devs.json'):
 
     members = frozenset(m.login for m in t.get_members())
     remaining = set(members)
+    revmap = dict((v, k) for k, v in devs.items())
 
-    for dev, ghdev in devs.items():
+    for ghdev, dev in revmap.items():
         if not ghdev:
             continue
         if ghdev not in members:
