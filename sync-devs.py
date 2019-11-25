@@ -17,15 +17,16 @@ def main(devs_json='devs.json'):
 
     with open(os.path.expanduser('~/.github-token')) as f:
         gh = github.Github(f.read().strip())
-    
-    for t in gh.get_organization('gentoo').get_teams():
+
+    org = gh.get_organization('gentoo')
+    for t in org.get_teams():
         if t.name == 'developers':
             break
     else:
         raise RuntimeError('Unable to find developers team')
 
     members = frozenset(m.login for m in t.get_members())
-    remaining = set(members)
+    remaining = set(m.login for m in org.get_members())
     revmap = dict((v, k) for k, v in devs.items())
 
     for ghdev, dev in revmap.items():
@@ -39,7 +40,7 @@ def main(devs_json='devs.json'):
 
     for m in remaining:
         print('REMOVE %s' % m)
-        t.remove_from_members(gh.get_user(m))
+        org.remove_from_members(gh.get_user(m))
 
     return 0
 
