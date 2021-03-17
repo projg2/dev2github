@@ -25,6 +25,9 @@ def main(proxied_maints_json='proxied-maints.json'):
     r = gh.get_repo('gentoo/gentoo')
     for pr in r.get_pulls(state='all'):
         print("\rPR #%04d" % pr.number, end='')
+        # skip special GitHub usernames
+        if pr.user.login in ("ghost", "web-flow"):
+            continue
         if pr.user.login not in maints.values():
             if pr.commits == 0:
                 continue
