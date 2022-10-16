@@ -45,14 +45,18 @@ def main(proxied_maints_json='proxied-maints.json'):
                 print(pr.patch_url)
                 print("PR submitter (%s) != committer (%s)" %
                         (pr.user, c1.committer))
-                if c1.committer is None:
-                    attributed = pr.user
-                    print('%s (%s) -> [PR] %s (%s)' % (attributed_c.email,
-                        c1.commit.committer.name, attributed.login, attributed.name))
-                else:
-                    attributed = c1.committer
-                    print('%s (%s) -> %s (%s)' % (attributed_c.email,
-                        c1.commit.committer.name, attributed.login, attributed.name))
+                try:
+                    if c1.committer is None:
+                        attributed = pr.user
+                        print('%s (%s) -> [PR] %s (%s)' % (attributed_c.email,
+                            c1.commit.committer.name, attributed.login, attributed.name))
+                    else:
+                        attributed = c1.committer
+                        print('%s (%s) -> %s (%s)' % (attributed_c.email,
+                            c1.commit.committer.name, attributed.login, attributed.name))
+                except github.GithubException:
+                    print("Invalid committer %s" % (attributed,))
+                    continue
                 need_confirm = True
             else:
                 print('\n%s -> %s' % (attributed_c.email, attributed.login))
