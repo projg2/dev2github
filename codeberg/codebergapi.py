@@ -28,6 +28,10 @@ class CodebergAPI:
     def repos_baseurl(self) -> str:
         return f"https://codeberg.org/api/v1/repos/{self.owner}/{self.repo}"
 
+    @property
+    def orgs_baseurl(self) -> str:
+        return f"https://codeberg.org/api/v1/orgs"
+
     def pulls(self) -> Generator[None, dict, None]:
         next_url = f"{self.repos_baseurl}/pulls?state=open"
         while True:
@@ -72,3 +76,15 @@ class CodebergAPI:
 
     def delete_review(self, pr_id: int, review_id: int) -> None:
         self.session.delete(f"{self.repos_baseurl}/pulls/{pr_id}/reviews/{review_id}")
+
+    def teams(self, org: str) -> Generator[None, dict, None]:
+        next_url = f"{self.orgs_baseurl}/{org}/teams"
+        while True:
+            r = self.session.get(next_url)
+            t = r.json()
+            import json; print(json.dumps(t, indent=2))
+            yield from t
+            x = r.links.get("next")
+            if not x:
+                break
+            next_url = x["url"]
