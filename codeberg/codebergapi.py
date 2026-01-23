@@ -30,10 +30,14 @@ class CodebergAPI:
 
     @property
     def orgs_baseurl(self) -> str:
-        return f"https://codeberg.org/api/v1/orgs"
+        return "https://codeberg.org/api/v1/orgs"
 
-    def pulls(self) -> Generator[None, dict, None]:
-        next_url = f"{self.repos_baseurl}/pulls?state=open"
+    @property
+    def teams_baseurl(self) -> str:
+        return "https://codeberg.org/api/v1/teams"
+
+    def _get_paginated(self, url) -> Generator[None, dict, None]:
+        next_url = url
         while True:
             r = self.session.get(next_url)
             yield from r.json()
@@ -42,10 +46,11 @@ class CodebergAPI:
                 break
             next_url = x["url"]
 
+    def pulls(self) -> Generator[None, dict, None]:
+        return self._get_paginated(f"{self.repos_baseurl}/pulls?state=open")
+
     def set_pr_title(self, pr_id: int, title: str) -> None:
-        self.session.patch(
-            f"{self.repos_baseurl}/pulls/{pr_id}", json={"title": title}
-        )
+        self.session.patch(f"{self.repos_baseurl}/pulls/{pr_id}", json={"title": title})
 
     def add_pr_labels(self, pr_id: int, labels: list[int]) -> None:
         self.session.patch(
@@ -78,13 +83,69 @@ class CodebergAPI:
         self.session.delete(f"{self.repos_baseurl}/pulls/{pr_id}/reviews/{review_id}")
 
     def teams(self, org: str) -> Generator[None, dict, None]:
-        next_url = f"{self.orgs_baseurl}/{org}/teams"
-        while True:
-            r = self.session.get(next_url)
-            t = r.json()
-            import json; print(json.dumps(t, indent=2))
-            yield from t
-            x = r.links.get("next")
-            if not x:
-                break
-            next_url = x["url"]
+        return self._get_paginated(f"{self.orgs_baseurl}/{org}/teams")
+
+    def create_team(self, org: str, name: str, description: str) -> dict:
+        # https://codeberg.org/api/swagger#/organization/orgCreateTeam
+        # The docs are buggy, see https://codeberg.org/forgejo/forgejo/issues/9881
+        r = self.session.post(
+            f"{self.orgs_baseurl}/{org}/teams",
+            json={
+                "name": name,
+                "description": description,
+                "include_all_repositories": False,
+                "permission": "write",
+                "units": [
+                    "repo.code",
+                    "repo.issues",
+                    "repo.pulls",
+                    "repo.releases",
+                    "repo.wiki",
+                    "repo.ext_wiki",
+                    "repo.ext_issues",
+                    "repo.projects",
+                    "repo.packages",
+                    "repo.actions",
+                ],
+                "units_map": {
+                    "repo.actions": "none",
+                    "repo.code": "read",
+                    "repo.ext_issues": "read",
+                    "repo.ext_wiki": "read",
+                    "repo.issues": "none",
+                    "repo.packages": "none",
+                    "repo.projects": "none",
+                    "repo.pulls": "write",
+                    "repo.releases": "none",
+                    "repo.wiki": "none",
+                },
+                "can_create_org_repo": False,
+            },
+        )
+        return r.json()
+
+    def team_members(self, team_id: int) -> Generator[None, dict, None]:
+        return self._get_paginated(f"{self.teams_baseurl}/{team_id}/members")
+
+    def team_add_member(self, team_id: int, username: str) -> None:
+        # https://codeberg.org/api/swagger#/organization/orgAddTeamMember
+        self.session.put(f"{self.teams_baseurl}/{team_id}/members/{username}")
+
+    def team_remove_member(self, team_id: int, username: str) -> None:
+        # https://codeberg.org/api/swagger#/organization/orgRemoveTeamMember
+        self.session.delete(f"{self.teams_baseurl}/{team_id}/members/{username}")
+
+    def team_repos(self, team_id: int) -> Generator[None, dict, None]:
+        # https://codeberg.org/api/swagger#/organization/orgListTeamRepos
+        return self._get_paginated(f"{self.teams_baseurl}/{team_id}/repos")
+
+    def org_members(self, org: str) -> Generator[None, dict, None]:
+        return self._get_paginated(f"{self.orgs_baseurl}/{org}/members")
+
+    def org_delete_team(self, team_id: int) -> None:
+        # https://codeberg.org/api/swagger#/organization/orgDeleteTeam
+        self.session.delete(f"{self.teams_baseurl}/{team_id}")
+
+    def org_remove_member(self, org: str, username: str) -> None:
+        # https://codeberg.org/api/swagger#/organization/orgDeleteMember
+        self.session.delete(f"{self.orgs_baseurl}/{org}/members/{username}")
