@@ -46,8 +46,11 @@ class CodebergAPI:
                 break
             next_url = x["url"]
 
-    def pulls(self) -> Generator[None, dict, None]:
-        return self._get_paginated(f"{self.repos_baseurl}/pulls?state=open")
+    def pulls(self, state="open") -> Generator[None, dict, None]:
+        """
+        state must be one of: open, closed, all
+        """
+        return self._get_paginated(f"{self.repos_baseurl}/pulls?state={state}")
 
     def set_pr_title(self, pr_id: int, title: str) -> None:
         self.session.patch(f"{self.repos_baseurl}/pulls/{pr_id}", json={"title": title})
@@ -61,6 +64,7 @@ class CodebergAPI:
         return self.session.get(f"{self.repos_baseurl}/labels").json()
 
     def commits(self, pr_id: int) -> list[dict]:
+        # https://codeberg.org/api/swagger#/repository/repoGetPullRequestCommits
         return self.session.get(f"{self.repos_baseurl}/pulls/{pr_id}/commits").json()
 
     def files(self, pr_id: int) -> list[dict]:
