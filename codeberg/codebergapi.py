@@ -37,14 +37,17 @@ class CodebergAPI:
         return "https://codeberg.org/api/v1/teams"
 
     def _get_paginated(self, url) -> Generator[None, dict, None]:
-        next_url = url
+        r = self.session.get(url, params={"limit": 100})
+        yield from r.json()
+        if "next" not in r.links:
+            return
+        next_url = r.links["next"]["url"]
         while True:
             r = self.session.get(next_url)
             yield from r.json()
-            x = r.links.get("next")
-            if not x:
+            if "next" not in r.links:
                 break
-            next_url = x["url"]
+            next_url = r.links["next"]["url"]
 
     def pulls(self, state="open") -> Generator[None, dict, None]:
         """
@@ -87,7 +90,26 @@ class CodebergAPI:
         self.session.delete(f"{self.repos_baseurl}/pulls/{pr_id}/reviews/{review_id}")
 
     def teams(self, org: str) -> Generator[None, dict, None]:
-        return self._get_paginated(f"{self.orgs_baseurl}/{org}/teams")
+        # https://codeberg.org/api/swagger#/organization/orgListTeams
+        #
+        # It *should* support pagination, but apparently it's not
+        # providing the Link header to the next page. We do get the
+        # X-Total-Count header which lets us work out the number of
+        # pages ourselves.
+        url = f"{self.orgs_baseurl}/{org}/teams/"
+        params = {"limit": 100, "page": 1}
+        r = self.session.get(url, params=params)
+        total = int(r.headers["X-Total-Count"])
+        t = r.json()
+        yield from t
+
+        count = len(t)
+        while count < total:
+            params["page"] += 1
+            r = self.session.get(url, params=params)
+            t = r.json()
+            yield from t
+            count += len(t)
 
     def create_team(self, org: str, name: str, description: str) -> dict:
         # https://codeberg.org/api/swagger#/organization/orgCreateTeam
