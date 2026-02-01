@@ -56,7 +56,7 @@ def main(devs_json="devs.json", projects_xml="projects.xml"):
             add_members(members, p, projs_x.getroot())
 
             # all project members mapped to codeberg logins
-            cb_members = set(devs[x] for x in members if x in devs)
+            cb_members = set(devs[x] for x in members if devs.get(x))
             # all team members as listed in Codeberg
             team_members = set(u["login"] for u in cb.team_members(team_id))
 
