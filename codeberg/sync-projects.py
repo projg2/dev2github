@@ -97,6 +97,8 @@ def main(devs_json="devs.json", projects_xml="projects.xml"):
         seen = {}
         names = [seen.setdefault(x, x) for x in names if x not in seen]
         desc = p.findtext("description")
+        if len(desc) >= 255:
+            desc = desc[:254] + "…"
         members = []
         add_members(members, p, projs_x.getroot())
 
