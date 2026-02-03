@@ -43,9 +43,12 @@ def main(devs_json="devs.json", projects_xml="projects.xml"):
     rem_projs = set(p for p in projs_x.getroot())
 
     with CodebergAPI("gentoo", "gentoo", api_token) as cb:
+        teams_to_delete = []
         for t in cb.teams(ORG):
             team_id = t["id"]
             team_name = t["name"]
+            if team_name == "Owners":  # skip special Owners team
+                continue
             p = projs.get(team_name.lower())
             if p is None:
                 print(f"{team_name} <-> ?")
@@ -84,7 +87,10 @@ def main(devs_json="devs.json", projects_xml="projects.xml"):
                     print("EMPTY TEAM WITH REPOS")
                 else:
                     print("DELETE TEAM")
-                    cb.org_delete_team(team_id)
+                    teams_to_delete.append(team_id)
+
+        for team_id in teams_to_delete:
+            cb.org_delete_team(team_id)
 
     for p in rem_projs:
         names = [
