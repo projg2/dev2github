@@ -47,11 +47,15 @@ def main(devs_json="devs.json", projects_xml="projects.xml"):
         for t in cb.teams(ORG):
             team_id = t["id"]
             team_name = t["name"]
-            if team_name == "Owners":  # skip special Owners team
+            if team_name.lower() in ("owners", "developers", "mirror-bot"):
+                # skip teams that shouldn't be treated as projects
+                # 'Owners' is special on Codeberg
+                # See https://docs.codeberg.org/collaborating/create-organization/#access-rights
                 continue
             p = projs.get(team_name.lower())
             if p is None:
                 print(f"{team_name} <-> ?")
+                teams_to_delete.append((team_id, team_name))
                 continue
             print(f"{team_name} <-> {p}")
             rem_projs.remove(p)
@@ -86,10 +90,12 @@ def main(devs_json="devs.json", projects_xml="projects.xml"):
                 if next(cb.team_repos(team_id), None):
                     print("EMPTY TEAM WITH REPOS")
                 else:
-                    print("DELETE TEAM")
-                    teams_to_delete.append(team_id)
+                    print(
+                        f"OBSOLETE TEAM https://codeberg.org/org/{ORG}/teams/{team_name}"
+                    )
 
-        for team_id in teams_to_delete:
+        for (team_id, team_name) in teams_to_delete:
+            print(f"DELETE team {team_name}")
             cb.org_delete_team(team_id)
 
     for p in rem_projs:
