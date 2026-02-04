@@ -36,8 +36,8 @@ def main(devs_json="devs.json", projects_xml="projects.xml"):
     projs = {}
     for p in projs_x.getroot():
         projs[p.findtext("email").split("@")[0].lower()] = p
-        projs[p.findtext("name").split("@")[0].lower()] = p
-        projs[p.findtext("url").split(":")[2].lower()] = p
+        projs[p.findtext("name").split("@")[0].replace(" ", "-").lower()] = p
+        projs[p.findtext("url").split(":")[2].replace(" ", "-").lower()] = p
 
     cb_devs = set(devs.values())
     rem_projs = set(p for p in projs_x.getroot())
@@ -95,10 +95,10 @@ def main(devs_json="devs.json", projects_xml="projects.xml"):
     for p in rem_projs:
         names = [
             p.findtext("email").split("@")[0],
-            p.findtext("name").lower(),
-            p.findtext("name"),
-            p.findtext("url").split(":")[2].lower(),
-            p.findtext("url").split(":")[2],
+            p.findtext("name").replace(" ", "-").lower(),
+            p.findtext("name").replace(" ", "-"),
+            p.findtext("url").split(":")[2].replace(" ", "-").lower(),
+            p.findtext("url").split(":")[2].replace(" ", "-"),
         ]
         seen = {}
         names = [seen.setdefault(x, x) for x in names if x not in seen]
