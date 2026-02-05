@@ -19,8 +19,8 @@ def main(projects_xml="projects.xml", proj_map_json="proj-map.json"):
     projs = {}
     for p in projs_x.getroot():
         projs[p.findtext("email").split("@")[0].lower()] = p
-        projs[p.findtext("name").split("@")[0].lower()] = p
-        projs[p.findtext("url").split(":")[2].lower()] = p
+        projs[p.findtext("name").split("@")[0].replace(" ", "-").lower()] = p
+        projs[p.findtext("url").split(":")[2].replace(" ", "-").lower()] = p
 
     proj_map = {}
     rem_projs = set(p for p in projs_x.getroot())
