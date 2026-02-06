@@ -119,7 +119,7 @@ class CodebergAPI:
             json={
                 "name": name,
                 "description": description,
-                "include_all_repositories": False,
+                "includes_all_repositories": True,
                 "permission": "write",
                 "units": [
                     "repo.code",
